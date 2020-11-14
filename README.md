@@ -3,6 +3,9 @@
 The aim of this project is to develop a cheap and easy-to-deploy system of analysing traffic in some road by using low-resource and small devices (RespberryPi, JetsonNano) accelerated with USB Coral TPU to work on real time.
 
 By giving this system a vieo (or using the camera (in the future)) you'll get a json file with all the vehicles crossing a detection line defined by the user. This file will not only contain the number of vehicles detected, it will contain information about every detection regarding the type of vehicle, the time when it was detected and an estimation of its speed (still not accurate, work in progress).
+
+There's an example in this repository: *vehicles.json* .
+
 No images or other sensible information is saved about the vehicle. The goal of this system is to extract traffic information for analysis at low cost and nothing else.
 
 <span>
