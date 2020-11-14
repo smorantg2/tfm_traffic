@@ -12,10 +12,7 @@ No images or other sensible information is saved about the vehicle. The goal of 
   <img src='GIF_long.gif'> 
   <img src='GIF_short.gif'>
 </span>
-<span>
-  <img src='docs/vid03.webp'>
-  <img src='docs/vid04.webp'>
-</span>
+
 
 ## Hardware
 <b>Primary Components</b>
