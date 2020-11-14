@@ -1,19 +1,20 @@
+
+<span>
+  <img src='GIF_long.gif' width="888" height="500"> 
+  <img src='GIF_short.gif' width="888" height="500">
+</span>
+
 # Traffic Analysis System
 
 The aim of this project is to develop a cheap and easy-to-deploy system of analysing traffic in some road by using low-resource and small devices (RespberryPi, JetsonNano) accelerated with USB Coral TPU to work on real time.
 
-By giving this system a video (or using the camera (*in the future*)) you'll get a json file with all the vehicles crossing a detection line defined by the user. This file will not only contain the number of vehicles detected, it will contain information about every detection regarding the type of vehicle, the time when it was detected and an estimation of its speed (still not accurate, work in progress).
+By giving this system a video (or using the camera (*in the future*)) you'll get a json file with all the vehicles crossing a detection line defined by the user. This file will not only contain the number of vehicles detected, it will contain information about every detection regarding the type of vehicle, the time when it was detected and an estimation of its speed (*still not accurate, work in progress*).
 
-The system detects 4 kinds of vehicles: Car, Bus, Truck and Motorbike.
+The system detects 4 kinds of vehicles: **Car, Bus, Truck** and **Motorbike**.
 
 There's an example in this repository: *vehicles.json* .
 
 No images or other sensible information is saved about the vehicle. The goal of this system is to extract traffic information for analysis at low cost and nothing else.
-
-<span>
-  <img src='GIF_long.gif'> 
-  <img src='GIF_short.gif'>
-</span>
 
 
 ## Hardware
@@ -62,6 +63,20 @@ There are some arguments you can change depending on whether you want to use TPU
 
 Once you've the script finished you'll get a json file in the same folder you have the main script (EmbosNet.py) with all the detections' information.
 
+## Model Information
+
+The model used in this repository is a MobileNet_V2 quantized so it can provide really fast predictions. 
+
+The model was trained with a custom dataset developed from zero by me for this particular project. 
+The amount of data is, as you can imagine, ridiculously small. However, the model behaves better than expected and well enough for the purpose of showing the main idea of this project.
+
+Other architectures and datasets could be used and the accuracy of the system may improve significantly.
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+## References
 
 The following article was really helpful and was referenced several times during the project:
 
