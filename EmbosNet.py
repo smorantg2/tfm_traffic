@@ -16,20 +16,76 @@ import json
 from classes import TrackableObject, CentroidTracker
 import math
 
+#this function will be called whenever the mouse is left-clicked twice
+def mouse_callback(event, x, y, flags, params):
 
+    #right-click event value is 2
+    if event == cv2.EVENT_LBUTTONDBLCLK:
+        global clicks
 
+        #store the coordinates of the right-click event
+        clicks.append([x, y])
+
+        #this just verifies that the mouse data is being collected
+        #you probably want to remove this later
+        #print(right_clicks)
+
+def mouse_callback_points(event, x, y, flags, params):
+
+    #right-click event value is 2
+    if event == cv2.EVENT_LBUTTONDBLCLK:
+        global perspective_points
+
+        #store the coordinates of the right-click event
+        perspective_points.append([x, y])
+
+        #this just verifies that the mouse data is being collected
+        #you probably want to remove this later
+        #print(right_clicks)
+
+def getLine(videofile, imW, imH):
+    vidcap = cv2.VideoCapture(videofile)
+    success, image = vidcap.read()
+    global clicks
+    clicks = []
+    if success:
+        #set mouse callback function for window
+        cv2.namedWindow('image', cv2.WINDOW_AUTOSIZE)
+        cv2.putText(image, "DOUBLE CLICK WITH LEFT MOUSE BUTTON TO DRAW THE DETECTION LINE. THEN PRESS \"Q\"",(int(imW*0.1), int(imH*0.1)), cv2.FONT_HERSHEY_COMPLEX, 0.75, (0,255,0),2 )
+        cv2.setMouseCallback('image', mouse_callback)
+        cv2.imshow('image', image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+    return clicks
+
+def getPPoints(videofile, imW, imH):
+    vidcap = cv2.VideoCapture(videofile)
+    success, image = vidcap.read()
+    global perspective_points
+
+    if success:
+        #set mouse callback function for window
+        cv2.namedWindow('image', cv2.WINDOW_AUTOSIZE)
+        cv2.putText(image, "DOUBLE CLICK WITH LEFT MOUSE BUTTON THE 4 POINTS NEEDED FOR PESPECTIVE. THEN PRESS \"Q\"",(int(imW*0.1), int(imH*0.1)), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0,255,0),2 )
+        cv2.setMouseCallback('image', mouse_callback_points)
+        cv2.imshow('image', image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+    return perspective_points
 
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-m", "--model_name", required=True, help="Name of the .tflite file, if different than detect.tflite")
 ap.add_argument("-p", "--model_path", required=True, help="older the .tflite file is located in")
-ap.add_argument("-v", "--video", type=str, help="path to input video file")
+ap.add_argument("-v", "--video", required = True, type=str, help="path to input video file")
 ap.add_argument("-o", "--output", type=str, help="path to optional output video file, with /")
-ap.add_argument("-t", "--threshold", type=float, default=0.5, help="minimum probability to filter weak detections")
-ap.add_argument("-s", "--skip_frames", type=int, default=5, help="# of skip frames between detections")
-ap.add_argument("-u", "--use_tpu", type=bool, default=True, help="Whether to use TPU or not")
-ap.add_argument("-d", "--display", type=bool, default=False, help="Whether to display all the action or not")
+ap.add_argument("-t", "--threshold", required = True, type=float, default=0.5, help="minimum probability to filter weak detections")
+#ap.add_argument("-s", "--skip_frames", type=int, default=5, help="# of skip frames between detections")
+ap.add_argument("-u", "--use_tpu", required =True, help="Whether to use TPU or not")
+ap.add_argument("-d", "--display", type = bool, help="Whether to display all the action or not")
 args = vars(ap.parse_args())
 
 # ---------------- Import TensorFlow libraries ---------
@@ -38,15 +94,15 @@ args = vars(ap.parse_args())
 pkg = importlib.util.find_spec('tflite_runtime')
 if pkg:
     from tflite_runtime.interpreter import Interpreter
-    if args["use_tpu"]:
+    if args["use_tpu"] == True:
         from tflite_runtime.interpreter import load_delegate
 else:
     from tensorflow.lite.python.interpreter import Interpreter
-    if args["use_tpu"]:
+    if args["use_tpu"] == True:
         from tensorflow.lite.python.interpreter import load_delegate
 
 # If using Edge TPU, assign filename for Edge TPU model
-if args["use_tpu"]:
+if args["use_tpu"] == True:
     # If user has specified the name of the .tflite file, use that name, otherwise use default 'edgetpu.tflite'
     if args["model_name"] == 'detect.tflite':
         args["model_name"] = 'edgetpu.tflite'
@@ -70,7 +126,7 @@ with open(PATH_TO_LABELS, 'r') as f:
 
 # Load the Tensorflow Lite model.
 # If using Edge TPU, use special load_delegate argument
-if args["use_tpu"]:
+if args["use_tpu"] == True:
     interpreter = Interpreter(model_path=PATH_TO_CKPT,
                               experimental_delegates=[load_delegate('libedgetpu.so.1.0')])
     print(PATH_TO_CKPT)
