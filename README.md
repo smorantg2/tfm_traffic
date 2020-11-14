@@ -47,7 +47,10 @@ python3 EmbosNet.py --model_name detect.tflite --model_path embosnet_v3_quant/mo
 ```
 (IMPORTANT!)
 The script will ask you first to draw the detection line with 2 double-clicks and the perspective of the road with 4 double-clicks in the following order:
-1) Top Left 2) Top Right 3) Bottom Left 4) Bottom Right
+1. Top Left 
+2. Top Right 
+3. Bottom Left 
+4. Bottom Right
 
 There are some arguments you can change depending on whether you want to use TPU or not, see the process or save the output video (like the GIFs above).
 
