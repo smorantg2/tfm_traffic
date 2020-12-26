@@ -83,9 +83,10 @@ ap.add_argument("-p", "--model_path", required=True, help="Folder the .tflite fi
 ap.add_argument("-v", "--video", required = True, type=str, help="path to input video file")
 ap.add_argument("-o", "--output", type=str, help="path to optional output video file, with /")
 ap.add_argument("-t", "--threshold", required = True, type=float, default=0.5, help="minimum probability to filter weak detections")
-#ap.add_argument("-s", "--skip_frames", type=int, default=5, help="# of skip frames between detections")
+ap.add_argument("-s", "--skip_frames", type=int, default=5, help="# of skip frames between detections")
 ap.add_argument("-u", "--use_tpu", help="Whether to use TPU or not")
 ap.add_argument("-d", "--display", type = bool, help="Whether to display all the action or not")
+ap.add_argument("-r", "--tracker", required = True, type = str, help = "OPENCV tracker to be used", default = "csrt")
 args = vars(ap.parse_args())
 
 # ---------------- Import TensorFlow libraries ---------
@@ -146,6 +147,15 @@ floating_model = (input_details[0]['dtype'] == np.float32)
 input_mean = 127.5
 input_std = 127.5
 
+#---------------TRACKERS------------
+OPENCV_OBJECT_TRACKERS = {
+    "csrt": cv2.TrackerCSRT_create,
+    "kcf": cv2.TrackerKCF_create,
+    "medianflow": cv2.TrackerMedianFlow_create,
+    "mosse": cv2.TrackerMOSSE_create
+}
+
+
 # ----------------------- CREATE JSON ------------
 json_vehicles = {}
 json_vehicles["vehicles"] = []
@@ -179,7 +189,7 @@ M = cv2.getPerspectiveTransform(pts1,pts2)
 
 maxDistance = (175/np.mean([1080,1920])) * np.mean([imH, imW])
 
-ct = CentroidTracker(maxDisappeared=5, maxDistance=maxDistance)
+ct = CentroidTracker(maxDisappeared=10, maxDistance=maxDistance)
 trackableObjects = {}
 
 # initialize the total number of frames processed thus far, along
@@ -237,49 +247,87 @@ while video.isOpened():
     rects = []
     vehicle_types = []
 
+    if totalFrames % args["skip_frames"] == 0:
+        # initialize OpenCV's special multi-object tracker
+        trackers = cv2.MultiTracker_create()
 
-    # set the status and initialize our new set of object trackers
-    status = "Detecting"
 
-    # Perform the actual detection by running the model with the image as input
-    interpreter.set_tensor(input_details[0]['index'], input_data)
-    interpreter.invoke()
+        # set the status and initialize our new set of object trackers
+        status = "Detecting"
 
-    # Retrieve detection results
-    boxes = interpreter.get_tensor(output_details[0]['index'])[0]  # Bounding box coordinates of detected objects
-    classes = interpreter.get_tensor(output_details[1]['index'])[0]  # Class index of detected objects
-    scores = interpreter.get_tensor(output_details[2]['index'])[0]  # Confidence of detected objects
+        # Perform the actual detection by running the model with the image as input
+        interpreter.set_tensor(input_details[0]['index'], input_data)
+        interpreter.invoke()
 
-    # Loop over all detections if confidence is above minimum threshold
-    for i in range(len(scores)):
-        if (scores[i] > args["threshold"]) and (scores[i] <= 1.0):
+        # Retrieve detection results
+        boxes = interpreter.get_tensor(output_details[0]['index'])[0]  # Bounding box coordinates of detected objects
+        classes = interpreter.get_tensor(output_details[1]['index'])[0]  # Class index of detected objects
+        scores = interpreter.get_tensor(output_details[2]['index'])[0]  # Confidence of detected objects
+
+        # Loop over all detections if confidence is above minimum threshold
+        for i in range(len(scores)):
+            if (scores[i] > args["threshold"]) and (scores[i] <= 1.0):
+                # Get bounding box coordinates and draw box
+                # Interpreter can return coordinates that are outside of image dimensions,
+                # need to force them to be within image using max() and min()
+                ymin = int(max(1, (boxes[i][0] * imH)))
+                xmin = int(max(1, (boxes[i][1] * imW)))
+                ymax = int(min(imH, (boxes[i][2] * imH)))
+                xmax = int(min(imW, (boxes[i][3] * imW)))
+
+                # create a new object tracker for the bounding box and add it
+                # to our multi-object tracker
+                tracker = OPENCV_OBJECT_TRACKERS[args["tracker"]]()
+
+                cx = (xmax+xmin)/2
+                cy = (ymax+ymin)/2
+                roiw = xmax-xmin
+                roih = ymax-ymin
+
+                box_resized = tuple([cx, cy, roiw, roih])
+                trackers.add(tracker, frame, box_resized)
+
+                if args["display"] == True or args["output"] is not None:
+                    cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (10, 255, 0), 1)
+
+                # Draw label
+                object_name = labels[int(classes[i])]  # Look up object name from "labels" array using class index
+                label = '%s: %d%%' % (object_name, int(scores[i] * 100))  # Example: 'person: 72%'
+                labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)  # Get font size
+                label_ymin = max(ymin, labelSize[1] + 10)  # Make sure not to draw label too close to top of window
+
+                if args["display"] == True or args["output"] is not None:
+                    cv2.rectangle(frame, (xmin, label_ymin - labelSize[1] - 10),
+                                  (xmin + labelSize[0], label_ymin + baseLine - 10), (255, 255, 255),
+                                  cv2.FILLED)  # Draw white box to put label text in
+                    cv2.putText(frame, label, (xmin, label_ymin - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0),
+                                2)  # Draw label text
+
+                rect = (xmin, ymin, xmax, ymax)
+                rects.append(rect)
+                vehicle_types.append(object_name)
+
+    else:
+        status = "Tracking"
+        # grab the updated bounding box coordinates (if any) for each
+        # object that is being tracked
+        (success, boxes) = trackers.update(frame)
+
+        for b in boxes:
             # Get bounding box coordinates and draw box
             # Interpreter can return coordinates that are outside of image dimensions,
             # need to force them to be within image using max() and min()
-            ymin = int(max(1, (boxes[i][0] * imH)))
-            xmin = int(max(1, (boxes[i][1] * imW)))
-            ymax = int(min(imH, (boxes[i][2] * imH)))
-            xmax = int(min(imW, (boxes[i][3] * imW)))
-
-            if args["display"] == True or args["output"] is not None:
-                cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (10, 255, 0), 1)
-
-            # Draw label
-            object_name = labels[int(classes[i])]  # Look up object name from "labels" array using class index
-            label = '%s: %d%%' % (object_name, int(scores[i] * 100))  # Example: 'person: 72%'
-            labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)  # Get font size
-            label_ymin = max(ymin, labelSize[1] + 10)  # Make sure not to draw label too close to top of window
-
-            if args["display"] == True or args["output"] is not None:
-                cv2.rectangle(frame, (xmin, label_ymin - labelSize[1] - 10),
-                              (xmin + labelSize[0], label_ymin + baseLine - 10), (255, 255, 255),
-                              cv2.FILLED)  # Draw white box to put label text in
-                cv2.putText(frame, label, (xmin, label_ymin - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0),
-                            2)  # Draw label text
+            ymin = int(b[1]-b[3]/2)
+            xmin = int(b[0]-b[2]/2)
+            ymax = int(b[1]+b[3]/2)
+            xmax = int(b[0]+b[2]/2)
 
             rect = (xmin, ymin, xmax, ymax)
             rects.append(rect)
-            vehicle_types.append(object_name)
+            vehicle_types.append(None)
+
+            if args["display"] == True or args["output"] is not None:
+                cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (255, 0, 0), 1)
 
 
     # use the centroid tracker to associate the (1) old object
@@ -314,7 +362,7 @@ while video.isOpened():
             # check to see if the object has been counted or not
             if not to.counted:
                 side = (to.centroids[-1][0] - pA[0] ) * (pB[1] - pA[1]) - (to.centroids[-1][1] - pA[1]) * (pB[0] - pA[0])
-                dist_line = np.abs(calculate_distance_point_line(np.array(centroid), pA, pB))
+                dist_line = np.abs(calculate_distance_point_line(np.array(centroid[:2]), pA, pB))
 
                 # if the direction is negative (indicating the object
                 # is moving up) AND the centroid is above the center
@@ -342,7 +390,7 @@ while video.isOpened():
         # -------------------------- SPEED ESTIMATION ------------------------
         if len(to.centroids) >= 4 and to.counted != True:
             # method 1 of estimating speed: Based on getting all Xs, calculating the difference between them all and taking more into account the last ones
-            cents = [cent for cent in to.centroids]  # Here we get all the coordinates from the centroids of the current objectID
+            cents = [cent[:2] for cent in to.centroids]  # Here we get all the coordinates from the centroids of the current objectID
             times = [t for t in to.vehicle_timestamp]  # Here we get all the timestamps from the current objectID
 
 
@@ -412,8 +460,8 @@ while video.isOpened():
     if args["display"] == True:
         # show the output frame
         cv2.imshow("Frame", frame)
-        print(args["display"])
-        key = cv2.waitKey(1) & 0xFF
+
+        key = cv2.waitKey(10) & 0xFF
         # if the `q` key was pressed, break from the loop
         if key == ord("q"):
             break
