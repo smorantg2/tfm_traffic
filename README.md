@@ -14,7 +14,7 @@ The system detects 4 kinds of vehicles: **Car, Bus, Truck** and **Motorbike**.
 
 There's an example in this repository: *vehicles.json* .
 
-No images or other sensible information is saved about the vehicle. The goal of this system is to extract traffic information for analysis at low cost and nothing else.
+No images or other sensitive information is saved about the vehicle. The goal of this system is to extract traffic information for analysis at low cost and nothing else.
 
 
 ## Hardware
