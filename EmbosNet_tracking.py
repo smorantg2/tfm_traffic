@@ -370,7 +370,7 @@ while video.isOpened():
                 if direction < -12 and side > 0 and dist_line <= d_from_line:
                     totalgoing += 1
                     to.counted = True
-                    json_vehicles["vehicles"].append({"vehicle": to.vehicle_type, "time": num_frame / 29.6, "speed":speed})
+                    json_vehicles["vehicles"].append({"vehicle": to.vehicle_type, "time": num_frame / 29.6, "speed":to.speed, "direction":1})
                     meta_color = (0, 0, 255)
                     #print("Detected: ", objectID)
                 # if the direction is positive (indicating the object
@@ -379,7 +379,7 @@ while video.isOpened():
                 elif direction > 12 and side < 0 and dist_line <= d_from_line:
                     totalcoming += 1
                     to.counted = True
-                    json_vehicles["vehicles"].append({"vehicle": to.vehicle_type, "time": num_frame / 29.6, "speed":to.speed})
+                    json_vehicles["vehicles"].append({"vehicle": to.vehicle_type, "time": num_frame / 29.6, "speed":to.speed, "direction":0})
                     meta_color = (0, 0, 255)
                     print("Detected: ", objectID)
         # store the trackable object in our dictionary

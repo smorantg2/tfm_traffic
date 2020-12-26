@@ -28,7 +28,7 @@ No images or other sensible information is saved about the vehicle. The goal of 
 
 ### Install environment
 
-If you are planning on implementing this repository in your RaspberryPi, I strongly recommend following the instructions in the below GitHub repository to install all needed libraries. 
+First, I strongly recommend following the instructions in the below GitHub repository to install all needed libraries. 
 It is a really well done and detailed step by step guide and more importantly the one I followed so it will give you less problems if you stick to it:
 ```
 https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi/blob/master/Raspberry_Pi_Guide.md
