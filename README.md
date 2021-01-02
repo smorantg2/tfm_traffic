@@ -66,7 +66,7 @@ There are some arguments you can change depending on whether you want to use TPU
 --video,        required = True, type=str,                help = "path to input video file
 --output,       type=str,                                 help = path to optional output video file, with "/"
 --threshold,    required = True, type=float, default=0.5, help = minimum probability to filter weak detections
---use_tpu,      required =True,                           help = Whether to use TPU or not
+--use_tpu,      type = bool,                              help = Whether to use TPU or not
 --display       type = bool,                              help = Whether to display all the action or not
 --tracker       type = str, default = "csrt"              help = "OPENCV tracker to be used"  (tracking version only)
 --skip_frames   type = int, default = 5                   help = # of skip frames between detections    (tracking version only)
