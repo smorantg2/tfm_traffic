@@ -1,8 +1,16 @@
 
+## Only object detection
+
 <span>
   <img src='GIF_od.gif' width="888" height="500"> 
+</span>
+
+## Object detection & tracking
+<span>
   <img src='GIF_csrt.gif' width="888" height="500">
 </span>
+
+
 
 # Traffic Analysis System
 
