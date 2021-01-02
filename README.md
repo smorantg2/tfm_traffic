@@ -76,7 +76,7 @@ Once you've the script finished you'll get a json file in the same folder you ha
 
 ## Model Information
 
-The model used in this repository is a MobileNet_V2 quantized so it can provide really fast predictions. 
+The model used in this repository is a MobileNet_V2 SSD quantized so it can provide really fast predictions. 
 
 The model was trained with a custom dataset developed from zero by me for this particular project. 
 The amount of data is, as you can imagine, ridiculously small. However, the model behaves better than expected and well enough for the purpose of showing the main idea of this project.
