@@ -30,19 +30,6 @@ def mouse_callback(event, x, y, flags, params):
         #you probably want to remove this later
         #print(right_clicks)
 
-def mouse_callback_points(event, x, y, flags, params):
-
-    #right-click event value is 2
-    if event == cv2.EVENT_LBUTTONDBLCLK:
-        global perspective_points
-
-        #store the coordinates of the right-click event
-        perspective_points.append([x, y])
-
-        #this just verifies that the mouse data is being collected
-        #you probably want to remove this later
-        #print(right_clicks)
-
 def getLine(videofile, imW, imH):
     vidcap = cv2.VideoCapture(videofile)
     success, image = vidcap.read()
@@ -58,23 +45,6 @@ def getLine(videofile, imW, imH):
         cv2.destroyAllWindows()
 
     return clicks
-
-def getPPoints(videofile, imW, imH):
-    vidcap = cv2.VideoCapture(videofile)
-    success, image = vidcap.read()
-    global perspective_points
-
-    if success:
-        #set mouse callback function for window
-        cv2.namedWindow('image', cv2.WINDOW_AUTOSIZE)
-        cv2.putText(image, "DOUBLE CLICK WITH LEFT MOUSE BUTTON THE 4 POINTS NEEDED FOR PESPECTIVE. THEN PRESS \"Q\"",(int(imW*0.1), int(imH*0.1)), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0,255,0),2 )
-        cv2.setMouseCallback('image', mouse_callback_points)
-        cv2.imshow('image', image)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-    return perspective_points
-
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -172,15 +142,6 @@ clicks = []
 clicks = getLine(VIDEO_PATH, imW, imH)
 pA = np.array(clicks[0])
 pB = np.array(clicks[1])
-
-# ---------------- GET POINTS FOR PERSPECTIVE CHANGE AND SPEED ESTIMATION ---------------
-perspective_points = []
-perspective_points = getPPoints(VIDEO_PATH, imW, imH)
-
-pts1 = np.float32([perspective_points[0],perspective_points[1],perspective_points[2],perspective_points[3]])
-pts2 = np.float32([[0,0],[100,0],[0,600],[100,600]])
-
-M = cv2.getPerspectiveTransform(pts1,pts2)
 
 # ------------------ Other initializations -------------------- ###
 # instantiate our centroid tracker, then initialize a list to store
@@ -370,7 +331,7 @@ while video.isOpened():
                 if direction < -12 and side > 0 and dist_line <= d_from_line:
                     totalgoing += 1
                     to.counted = True
-                    json_vehicles["vehicles"].append({"vehicle": to.vehicle_type, "time": num_frame / 29.6, "speed":to.speed, "direction":1})
+                    json_vehicles["vehicles"].append({"vehicle": to.vehicle_type, "time": num_frame / 29.6, "direction":1})
                     meta_color = (0, 0, 255)
                     #print("Detected: ", objectID)
                 # if the direction is positive (indicating the object
@@ -379,41 +340,11 @@ while video.isOpened():
                 elif direction > 12 and side < 0 and dist_line <= d_from_line:
                     totalcoming += 1
                     to.counted = True
-                    json_vehicles["vehicles"].append({"vehicle": to.vehicle_type, "time": num_frame / 29.6, "speed":to.speed, "direction":0})
+                    json_vehicles["vehicles"].append({"vehicle": to.vehicle_type, "time": num_frame / 29.6, "direction":0})
                     meta_color = (0, 0, 255)
                     print("Detected: ", objectID)
         # store the trackable object in our dictionary
         trackableObjects[objectID] = to
-
-
-
-        # -------------------------- SPEED ESTIMATION ------------------------
-        if len(to.centroids) >= 4 and to.counted != True:
-            # method 1 of estimating speed: Based on getting all Xs, calculating the difference between them all and taking more into account the last ones
-            cents = [cent[:2] for cent in to.centroids]  # Here we get all the coordinates from the centroids of the current objectID
-            times = [t for t in to.vehicle_timestamp]  # Here we get all the timestamps from the current objectID
-
-
-            new_point_start = np.array(np.matmul(M, [cents[1][0], cents[1][1], 1]), np.int8)
-            new_point_end = np.array(np.matmul(M, [cents[-1][0], cents[-1][1], 1]), np.int8)
-
-            distance = math.dist(new_point_start,new_point_end)
-            elapsed_time = (times[-1]-times[1])/ 29.6
-            speed = 0.2 * distance / elapsed_time
-            #print("dist: {}, time: {}, result: {}".format(distance, elapsed_time, speed))
-            #print("ID: {}, Start {},End {}, Distance:{}\n".format(objectID, new_point_start, new_point_end, distance))
-
-
-
-            #Speed is added to TrackableObject so we can save it in the json file.
-            to.speed = speed
-
-            speed_str = str(round(to.speed, 2)) + "km/h"
-
-            # speed = ((cents[-2]-cents[-1])/(int(pre_disappeared[objectID]+1)))*3
-            # print("{} dividido entre {} = {}".format((cents[-2] - cents[-1]), int(pre_disappeared[objectID]+1), speed))
-        else:
-            speed_str = str(round(to.speed,2)) + "km/h"
 
         # ----------- DISPLAY -----------
         # draw both the ID of the object and the centroid of the
@@ -425,7 +356,7 @@ while video.isOpened():
             text_color = (0,255,0)
 
         if args["display"] == True or args["output"] is not None:
-            text = "ID {}, {}, {}, {}".format(objectID, vehicle_type[1], to.counted, speed_str)
+            text = "ID {}, {}, {}".format(objectID, vehicle_type[1], to.counted)
 
             cv2.putText(frame, text, (centroid[0] - 1, centroid[1] - 1),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.4, text_color, 1)

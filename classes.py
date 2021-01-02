@@ -11,7 +11,6 @@ class TrackableObject:
         self.centroids = [centroid]
         self.vehicle_type = vehicle_type
         self.vehicle_timestamp = [vehicle_timestamp] #list of timestamps using the current timestamp
-        self.speed = 0
         # initialize a boolean used to indicate if the object has
         # already been counted or not
         self.counted = False
