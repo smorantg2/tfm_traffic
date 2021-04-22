@@ -14,7 +14,7 @@
 
 # Traffic Analysis System
 
-The aim of this project is to develop a cheap and easy-to-deploy system of analysing traffic in some road by using low-resource and small devices (RespberryPi, JetsonNano) accelerated with USB Coral TPU to work on real time.
+The aim of this project is to develop a cheap and easy-to-deploy system of analysing traffic in some road by using low-resource and small devices (RespberryPi) accelerated with USB Coral TPU to work on real time.
 
 By giving this system a video (or using the camera) you'll get a json file with all the vehicles crossing a detection line defined by the user. This file will not only contain the number of vehicles detected, it will contain information about every detection regarding the type of vehicle and the time when it was detected.
 
@@ -31,8 +31,7 @@ There are two main scripts EmbosNet.py and EmbosNet_tracking.py. The first one u
 <b>Primary Components</b>
 1) Raspberry Pi (<a target="_blank" href="https://www.raspberrypi.org/products/raspberry-pi-4-model-b"/>Link</a>)
 2) Raspberry Pi camera (<a target="_blank" href="https://www.raspberrypi.org/products/camera-module-v2/">Link</a>)
-3) JetsonNano (<a target="_blank" href="https://developer.nvidia.com/embedded/jetson-nano-developer-kit">Alternative to Rpi</a>)
-4) Google Coral Accelerator (<a target="_blank" href="https://coral.ai/products/accelerator">Strongly recommended</a>)
+3) Google Coral Accelerator (<a target="_blank" href="https://coral.ai/products/accelerator">Strongly recommended</a>)
 
 ## Software
 
